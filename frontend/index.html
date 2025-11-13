@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Замъкът на знанието - БЕЛ матура 10. клас</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://unpkg.com/splitting@1.0.6/dist/splitting.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <link href="https://unpkg.com/splitting@1.0.6/dist/splitting.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-bg: #1a2332;
+            --secondary-bg: #0f1724;
+            --accent-gold: #d4af37;
+            --accent-silver: #c0c0c0;
+            --accent-bronze: #cd7f32;
+            --success-green: #22c55e;
+            --error-red: #ef4444;
+            --text-primary: #ffffff;
+            --text-secondary: #e2e8f0;
+            --text-muted: #94a3b8;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--primary-bg) 0%, var(--secondary-bg) 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .title-font {
+            font-family: 'Crimson Text', serif;
+        }
+        
+        .mono-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .hero-bg {
+            background: linear-gradient(rgba(26, 35, 50, 0.8), rgba(15, 23, 36, 0.9));
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        .floating-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .golden-glow {
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+        }
+        
+        .answer-btn {
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .answer-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.2);
+            border-color: var(--accent-gold);
+        }
+        
+        .answer-btn.correct {
+            background: rgba(34, 197, 94, 0.2);
+            border-color: var(--success-green);
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+        }
+        
+        .answer-btn.wrong {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: var(--error-red);
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+        }
+        
+        .answer-btn.selected {
+            border-color: var(--accent-gold);
+            background: rgba(212, 175, 55, 0.1);
+        }
+        
+        .key-icon {
+            display: inline-block;
+            transition: all 0.3s ease;
+            filter: drop-shadow(0 0 8px currentColor);
+        }
+        
+        .key-icon:hover {
+            transform: scale(1.1) rotate(5deg);
+        }
+        
+        .timer-pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .progress-bar {
+            background: linear-gradient(90deg, var(--accent-gold) 0%, var(--accent-silver) 50%, var(--accent-bronze) 100%);
+            height: 6px;
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+        
+        .question-enter {
+            animation: slideInUp 0.5s ease-out;
+        }
+        
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .key-collect {
+            animation: keyCollect 0.8s ease-out;
+        }
+        
+        @keyframes keyCollect {
+            0% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.3) rotate(180deg); }
+            100% { transform: scale(1) rotate(360deg); }
+        }
+        
+        .hidden { display: none; }
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            animation: modalSlide 0.3s ease-out;
+        }
+
+        @keyframes modalSlide {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .auth-btn {
+            transition: all 0.3s ease;
+        }
+
+        .auth-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+        }
+
+        .social-btn {
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .social-btn:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <!-- Particles Background -->
+    <div id="particles-container" class="floating-particles"></div>
+    
+    <!-- Login/Signup Screen -->
+    <div id="authScreen" class="hero-bg flex items-center justify-center relative z-10">
+        <div class="glass-card p-8 w-full max-w-md mx-4">
+            <div class="text-center mb-8">
+                <h1 class="title-font text-4xl font-bold text-yellow-400 mb-2 golden-glow">
+                    Замъкът на знанието
+                </h1>
+                <p class="text-gray-300">БЕЛ матура 10. клас</p>
+            </div>
+
+            <!-- Login Form -->
+            <div id="loginForm" class="space-y-4">
+                <div>
+                    <label class="block text-gray-300 mb-2">Потребителско име</label>
+                    <input type="text" id="loginUsername" class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white transition-all" placeholder="Въведете потребителско име">
+                </div>
+                <div>
+                    <label class="block text-gray-300 mb-2">Парола</label>
+                    <input type="password" id="loginPassword" class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white transition-all" placeholder="Въведете парола">
+                </div>
+                <button id="loginBtn" class="w-full auth-btn bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-white font-bold py-3 px-6 rounded-lg">
+                    Влез
+                </button>
+
+                <div class="relative my-6">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-gray-600"></div>
+                    </div>
+                    <div class="relative flex justify-center text-sm">
+                        <span class="px-2 bg-gray-900 text-gray-400">или</span>
+                    </div>
+                </div>
+
+                <button id="googleLoginBtn" class="w-full social-btn bg-white text-gray-800 font-medium py-3 px-6 rounded-lg flex items-center justify-center gap-3">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    Вход с Google
+                </button>
+
+                <button class="w-full social-btn bg-gray-800 text-white font-medium py-3 px-6 rounded-lg flex items-center justify-center gap-3">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M22 4L12 14.01l-3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Вход с ChatGPT
+                </button>
+
+                <p class="text-center text-gray-400 mt-4">
+                    Нямаш акаунт? <button id="showSignup" class="text-yellow-400 hover:text-yellow-300 font-medium">Регистрирай се</button>
+                </p>
+            </div>
+
+            <!-- Signup Form -->
+            <div id="signupForm" class="space-y-4 hidden">
+                <div>
+                    <label class="block text-gray-300 mb-2">Потребителско име</label>
+                    <input type="text" id="signupUsername" class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white transition-all" placeholder="Изберете потребителско име">
+                </div>
+                <div>
+                    <label class="block text-gray-300 mb-2">Парола</label>
+                    <input type="password" id="signupPassword" class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white transition-all" placeholder="Изберете парола">
+                </div>
+                <div>
+                    <label class="block text-gray-300 mb-2">Потвърди парола</label>
+                    <input type="password" id="signupPasswordConfirm" class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white transition-all" placeholder="Потвърдете паролата">
+                </div>
+                <button id="signupBtn" class="w-full auth-btn bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-white font-bold py-3 px-6 rounded-lg">
+                    Регистрирай се
+                </button>
+
+                <p class="text-center text-gray-400 mt-4">
+                    Вече имаш акаунт? <button id="showLogin" class="text-yellow-400 hover:text-yellow-300 font-medium">Влез</button>
+                </p>
+            </div>
+
+            <div id="authError" class="hidden mt-4 p-3 bg-red-900 border border-red-500 rounded-lg text-red-200 text-sm"></div>
+        </div>
+    </div>
+    
+    <!-- Start Screen -->
+    <div id="startScreen" class="hidden hero-bg flex items-center justify-center relative z-10">
+        <div class="text-center max-w-4xl mx-auto px-6">
+            <h1 class="title-font text-6xl md:text-8xl font-bold text-white mb-6 golden-glow" data-splitting>
+                Замъкът на знанието
+            </h1>
+            <p class="text-xl md:text-2xl text-gray-200 mb-4">
+                Здравей, <span id="welcomeUsername" class="text-yellow-400 font-bold"></span>! 👋
+            </p>
+            <p class="text-lg md:text-xl text-gray-200 mb-8 max-w-2xl mx-auto leading-relaxed">
+                Влез в омагьосан замък с 30 стаи, където всяка стая е предизвикателство към твоите знания по българска литература.
+            </p>
+            <div class="glass-card p-8 mb-8 max-w-md mx-auto">
+                <h3 class="title-font text-2xl text-yellow-400 mb-4">Какво те очаква?</h3>
+                <ul class="text-left text-gray-200 space-y-2">
+                    <li>• 30 въпроса от българска литература</li>
+                    <li>• 3 нива на трудност (бронзово, сребърно, златно)</li>
+                    <li>• 30 минути за основните въпроси</li>
+                    <li>• Финална теза за 5 минути</li>
+                    <li>• Оценка според събраните ключове</li>
+                </ul>
+            </div>
+            <button id="startBtn" class="bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-white font-bold py-4 px-8 rounded-full text-xl transition-all duration-300 transform hover:scale-105 golden-glow">
+                Влез в замъка
+            </button>
+            <button id="logoutBtnStart" class="ml-4 bg-gray-700 hover:bg-gray-600 text-white font-medium py-4 px-8 rounded-full text-xl transition-all duration-300">
+                Излез
+            </button>
+        </div>
+    </div>
+    
+    <!-- Game Screen -->
+    <div id="gameScreen" class="hidden min-h-screen p-6 relative z-10">
+        <!-- Header -->
+        <div class="glass-card p-6 mb-6">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="flex items-center gap-6">
+                    <h1 class="title-font text-3xl font-bold text-yellow-400">Замъкът на знанието</h1>
+                    <div class="flex items-center gap-4">
+                        <span class="key-icon text-2xl">🥉</span>
+                        <span id="bronzeCount" class="text-xl font-bold text-yellow-600">0</span>
+                        <span class="key-icon text-2xl">🥈</span>
+                        <span id="silverCount" class="text-xl font-bold text-gray-300">0</span>
+                        <span class="key-icon text-2xl">🥇</span>
+                        <span id="goldCount" class="text-xl font-bold text-yellow-400">0</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="text-center">
+                        <div id="timer" class="mono-font text-2xl font-bold text-yellow-400 timer-pulse">30:00</div>
+                        <div class="text-sm text-gray-400">остават</div>
+                    </div>
+                    <button id="surrenderBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors">
+                        Предай се
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div class="mt-4">
+                <div class="flex justify-between text-sm text-gray-400 mb-2">
+                    <span>Въпрос <span id="currentQuestion">1</span> от <span id="totalQuestions">30</span></span>
+                    <span id="progressPercent">3%</span>
+                </div>
+                <div class="w-full bg-gray-700 rounded-full h-2">
+                    <div id="progressBar" class="progress-bar w-1 rounded-full"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Question Card -->
+        <div class="glass-card p-8 mb-6 question-enter">
+            <div class="mb-6">
+                <h2 id="questionText" class="title-font text-2xl md:text-3xl text-white leading-relaxed">
+                    Зареждане на въпрос...
+                </h2>
+            </div>
+            
+            <!-- Answer Options -->
+            <div id="answerOptions" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <!-- Answers will be populated by JavaScript -->
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <button id="hintBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors">
+                    💡 Помощ
+                </button>
+                <div class="flex gap-4">
+                    <button id="nextBtn" class="hidden bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition-colors">
+                        Следващ въпрос
+                    </button>
+                    <button id="submitBtn" class="bg-yellow-600 hover:bg-yellow-700 text-white px-8 py-3 rounded-lg font-bold transition-colors">
+                        Потвърди отговор
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Feedback Message -->
+        <div id="feedbackMsg" class="hidden glass-card p-4 mb-6 text-center">
+            <p id="feedbackText" class="text-lg font-medium"></p>
+        </div>
+    </div>
+    
+    <!-- Thesis Screen -->
+    <div id="thesisScreen" class="hidden min-h-screen p-6 relative z-10">
+        <div class="max-w-4xl mx-auto">
+            <div class="glass-card p-8 mb-6">
+                <h1 class="title-font text-4xl font-bold text-yellow-400 mb-4 text-center">
+                    Финално предизвикателство
+                </h1>
+                <p class="text-xl text-gray-200 mb-6 text-center">
+                    Напиши кратка теза на тема:
+                </p>
+                <div class="bg-gradient-to-r from-yellow-600 to-yellow-500 text-white p-4 rounded-lg mb-6">
+                    <h2 id="thesisTopic" class="title-font text-2xl font-bold text-center">
+                        "Силата на знанието в съвременния свят"
+                    </h2>
+                </div>
+                <div class="text-center mb-6">
+                    <div id="thesisTimer" class="mono-font text-3xl font-bold text-yellow-400 timer-pulse">5:00</div>
+                    <p class="text-gray-400">остават за тезата</p>
+                </div>
+
+                <!-- Example Essays -->
+                <div class="glass-card p-6 mb-6">
+                    <h3 class="title-font text-xl text-yellow-400 mb-3">📖 Примерни тези за вдъхновение:</h3>
+                    <div class="space-y-4 text-sm text-gray-300">
+                        <details class="cursor-pointer">
+                            <summary class="font-bold hover:text-yellow-400">Пример 1: "Героизмът в българската литература"</summary>
+                            <p class="mt-2 pl-4 border-l-2 border-yellow-600">
+                                Българската литература е богата на героични образи, които олицетворяват националния дух и стремежа към свобода. От Хадж Димитър на Христо Ботев до образа на Огнянов в „Под игото" на Иван Вазов, героите носят универсалното послание за саможертва и любов към отечеството. Тези литературни персонажи не са просто художествени образи - те са символи на непокорството и достойнството. В съвременния свят, където индивидуализмът често доминира, тези произведения ни напомнят за силата на колективния идеал и готовността да се жертваме за по-висша цел. Литературата съхранява паметта за миналото и вдъхновява бъдещите поколения.
+                            </p>
+                        </details>
+                        <details class="cursor-pointer">
+                            <summary class="font-bold hover:text-yellow-400">Пример 2: "Природата като символ"</summary>
+                            <p class="mt-2 pl-4 border-l-2 border-yellow-600">
+                                В българската поезия природата не е само декорация, а активен участник в художественото повествование. При Ботев залезът в „Хадж Димитър" символизира безсмъртието на героя, докато в „Епопея на забравените" на Вазов планината е свидетел на народните страдания. Тази традиция показва дълбоката връзка между българина и родната земя. Природните образи носят философски смисъл - те говорят за вечността, за цикличността на живота и смъртта. В епохата на урбанизация и технологичен прогрес литературата ни връща към корените и напомня за хармонията между човека и природата. Символиката на природните явления обогатява текстовете и ги прави универсални.
+                            </p>
+                        </details>
+                        <details class="cursor-pointer">
+                            <summary class="font-bold hover:text-yellow-400">Пример 3: "Културната идентичност"</summary>
+                            <p class="mt-2 pl-4 border-l-2 border-yellow-600">
+                                Пътешествието в „До Чикаго и назад" на Алеко Константинов поставя въпроса за културната идентичност в глобализиращия се свят. Главният герой се сблъсква с чуждото и през това преживяване преоткрива своето. Този мотив е актуален и днес, когато милиони български емигранти търсят по-добър живот в чужбина. Литературата ни учи, че запазването на културната идентичност не означава изолация, а съзнателен избор да останем верни на корените си. Константинов с хумор и сатира разкрива абсурдите на западната цивилизация, без да идеализира българската действителност. Балансът между традицията и модерността е ключова тема, която българските писатели разглеждат с дълбочина и чувствителност.
+                            </p>
+                        </details>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="glass-card p-8">
+                <textarea 
+                    id="thesisInput" 
+                    placeholder="Напиши тук своята теза (150-200 думи)..."
+                    class="w-full h-64 bg-transparent border border-gray-600 rounded-lg p-4 text-white resize-none focus:border-yellow-400 focus:outline-none"
+                ></textarea>
+                
+                <div class="flex justify-between items-center mt-4">
+                    <div class="text-gray-400">
+                        Думи: <span id="wordCount" class="text-yellow-400 font-bold">0</span>
+                    </div>
+                    <button id="submitThesisBtn" class="bg-yellow-600 hover:bg-yellow-700 text-white px-8 py-3 rounded-lg font-bold transition-colors">
+                        Предай тезата
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Results Screen -->
+    <div id="resultsScreen" class="hidden min-h-screen p-6 relative z-10">
+        <div class="max-w-4xl mx-auto">
+            <div class="glass-card p-8 mb-6 text-center">
+                <h1 class="title-font text-5xl font-bold text-yellow-400 mb-6">
+                    🏆 Резултати 🏆
+                </h1>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-gradient-to-b from-yellow-600 to-yellow-700 p-6 rounded-lg">
+                        <div class="text-4xl mb-2">🥉</div>
+                        <div class="text-3xl font-bold text-white" id="finalBronze">0</div>
+                        <div class="text-yellow-200">Бронзови ключа</div>
+                    </div>
+                    <div class="bg-gradient-to-b from-gray-400 to-gray-500 p-6 rounded-lg">
+                        <div class="text-4xl mb-2">🥈</div>
+                        <div class="text-3xl font-bold text-white" id="finalSilver">0</div>
+                        <div class="text-gray-200">Сребърни ключа</div>
+                    </div>
+                    <div class="bg-gradient-to-b from-yellow-400 to-yellow-500 p-6 rounded-lg">
+                        <div class="text-4xl mb-2">🥇</div>
+                        <div class="text-3xl font-bol
+
+
+                        d text-white" id="finalGold">0</div>
+                        <div class="text-yellow-200">Златни ключа</div>
+                    </div>
+                </div>
+                
+                <div class="bg-gradient-to-r from-blue-600 to-purple-600 p-6 rounded-lg mb-6">
+                    <div class="text-2xl font-bold text-white mb-2">Твоята оценка</div>
+                    <div id="finalGrade" class="text-6xl font-bold text-yellow-400">5.50</div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="bg-gray-800 p-6 rounded-lg">
+                        <h3 class="text-xl font-bold text-yellow-400 mb-4">Статистика</h3>
+                        <div class="space-y-2 text-gray-200">
+                            <div>Верни отговори: <span id="correctAnswers" class="text-green-400 font-bold">0</span></div>
+                            <div>Грешни отговори: <span id="wrongAnswers" class="text-red-400 font-bold">0</span></div>
+                            <div>Използвани подсказки: <span id="usedHints" class="text-blue-400 font-bold">0</span></div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-800 p-6 rounded-lg">
+                        <h3 class="text-xl font-bold text-yellow-400 mb-4">Анализ</h3>
+                        <div id="performanceAnalysis" class="text-gray-200 space-y-2">
+                            <!-- Analysis will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+                
+                <button id="restartBtn" class="bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-white font-bold py-4 px-8 rounded-full text-xl transition-all duration-300 transform hover:scale-105 golden-glow">
+                    Играй отново
+                </button>
+            </div>
+        </div>
+    </div>
+                   <button id="openAICreatorBtn" class="ml-4 mt-4 md:mt-0 bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-4 px-6 rounded-full text-lg transition-all duration-300">
+                       Създай въпрос с AI
+                   </button>
+
+    <!-- Surrender Confirmation Modal -->
+           <!-- AI Question Creator Modal -->
+           <div id="aiCreatorModal" class="modal hidden">
+               <div class="modal-content glass-card p-6 max-w-2xl mx-4">
+                   <div class="flex justify-between items-center mb-4">
+                       <h2 class="title-font text-2xl font-bold text-yellow-400">Създай въпрос с помощта на AI</h2>
+                       <button id="closeAIModal" class="text-gray-300 hover:text-white">✕</button>
+                   </div>
+
+                   <div class="space-y-4">
+                       <p class="text-sm text-gray-300">Тази опция използва Google Gemini API за генериране на въпроси. Сървърът чете `GEMINI_API_KEY` от `.env` файла.</p>
+
+                    <div>
+                        <p class="text-sm text-gray-300">Получете вашия Gemini API ключ от <a href="https://makersuite.google.com/app/apikey" target="_blank" class="text-yellow-400 hover:underline">Google AI Studio</a> и го добавете в `.env` файла като <code>GEMINI_API_KEY=your_key_here</code>.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-gray-300 mb-2">Ниво на трудност</label>
+                            <select id="aiDifficulty" class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white">
+                                <option value="bronze">Бронзово</option>
+                                <option value="silver">Сребърно</option>
+                                <option value="gold">Златно</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-300 mb-2">Ключови думи / тема (по избор)</label>
+                            <input id="aiKeywords" class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white" placeholder="напр. Вазов, Под игото, героизъм">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-gray-300 mb-2">Брой въпроси в теста</label>
+                            <select id="aiTestSize" class="w-32 px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white">
+                                <option value="10">10</option>
+                                <option value="20">20</option>
+                                <option value="30">30</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-300 mb-2">Вкл. финална теза?</label>
+                            <select id="aiIncludeThesis" class="w-32 px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white">
+                                <option value="yes">Да</option>
+                                <option value="no">Не</option>
+                            </select>
+                        </div>
+                    </div>
+
+                       <div class="flex gap-4">
+                        <button id="generateAIQuestionBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-lg">Генерирай тест</button>
+                        <button id="saveAIQuestionBtn" class="bg-green-600 hover:bg-green-500 text-white px-6 py-3 rounded-lg" disabled>Запази теста</button>
+                       </div>
+
+                       <div id="aiGeneratorStatus" class="text-sm text-gray-300"></div>
+
+                       <div id="aiPreview" class="bg-gray-900 p-4 rounded-lg hidden">
+                           <h3 class="text-yellow-400 font-bold mb-2">Преглед</h3>
+                           <div id="aiPreviewContent" class="text-gray-200"></div>
+                       </div>
+                   </div>
+               </div>
+           </div>
+    <div id="surrenderModal" class="modal hidden">
+        <div class="modal-content glass-card p-8 max-w-md mx-4">
+            <div class="text-center mb-6">
+                <div class="text-6xl mb-4">🏳️</div>
+                <h2 class="title-font text-3xl font-bold text-yellow-400 mb-2">Предаване</h2>
+                <p class="text-gray-300">Сигурни ли сте, че искате да предадете играта? Ще загубите текущия си прогрес.</p>
+            </div>
+            <div class="flex gap-4">
+                <button id="confirmSurrender" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition-colors">
+                    Да, предавам се
+                </button>
+                <button id="cancelSurrender" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg transition-colors">
+                    Продължи играта
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Ensure frontend uses the same origin as the server when available.
+        // This helps avoid "Failed to fetch" when the app is served from the proxy
+        // (open the site at http://localhost:3000 so the proxy and frontend share origin).
+        if (!window.PROXY_BASE_URL) window.PROXY_BASE_URL = window.location.origin;
+    </script>
+    <script src="main.js"></script>
+</body>
+</html>
